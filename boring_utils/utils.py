@@ -264,7 +264,8 @@ def tprint(title='', sep='=', c=None):
     - sep (str, optional): The separator character. Default is '='.
     - c (str, optional): The color of the output. Options are 'red', 'green', 'blue', 'yellow', 'pep', 'brown', or None for default color.
     """
-    separator = sep * 20
+    separator = sep * (20 // len(sep))  # Ensure total length is approximately 20
+    
     if title == '':
         output = f'\n{separator}{separator}'
     else:
