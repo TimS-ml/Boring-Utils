@@ -89,6 +89,22 @@ def plot_loss(
     plt.show()
 
 
+def get_layers(func):
+    '''
+    Usage:
+      from boring_nn import pe
+      pe_layers = get_layers(pe)
+      pe_name = 'SinusoidalPositionalEncoding'
+      pos_encoding = pe_layers[pe_name](d_model, dropout, max_len)
+    '''
+    func_layers = {}
+    for name, obj in inspect.getmembers(func):
+        if inspect.isclass(obj) and issubclass(obj, torch.nn.Module):
+            # func_layers[name.lower()] = obj
+            func_layers[name] = obj
+    return func_layers
+
+
 def mprint(obj, magic_methods=False, private_methods=True, public_methods=True):
     # Split items based on their types
     
@@ -109,22 +125,6 @@ def mprint(obj, magic_methods=False, private_methods=True, public_methods=True):
         print("\n\033[93mPublic Methods:\033[0m")
         for item in sorted(public_methods):
             print(f"    {item}")
-
-
-def get_layers(func):
-    '''
-    Usage:
-      from boring_nn import pe
-      pe_layers = get_layers(pe)
-      pe_name = 'SinusoidalPositionalEncoding'
-      pos_encoding = pe_layers[pe_name](d_model, dropout, max_len)
-    '''
-    func_layers = {}
-    for name, obj in inspect.getmembers(func):
-        if inspect.isclass(obj) and issubclass(obj, torch.nn.Module):
-            # func_layers[name.lower()] = obj
-            func_layers[name] = obj
-    return func_layers
 
 
 def cprint(*exprs, c=None, class_name=True):
@@ -253,6 +253,37 @@ def sprint(*exprs, globals=None, locals=None):
             print(f"\033[93m{expr}\033[0m: \n{value}\n")
         except Exception as e:
             print(f"Error evaluating {expr}: {e}")
+
+
+def tprint(title='', sep='=', c=None):
+    """
+    Print a title with separators.
+    
+    Parameters:
+    - title (str): The title to print.
+    - sep (str, optional): The separator character. Default is '='.
+    - c (str, optional): The color of the output. Options are 'red', 'green', 'blue', 'yellow', 'pep', 'brown', or None for default color.
+    """
+    separator = sep * 20
+    if title == '':
+        output = f'\n{separator}{separator}'
+    else:
+        output = f'\n{separator} {title} {separator}'
+    
+    if c == 'red':
+        print(RED_PATTERN.format(output))
+    elif c == 'green':
+        print(GREEN_PATTERN.format(output))
+    elif c == 'blue':
+        print(BLUE_PATTERN.format(output))
+    elif c == 'yellow':
+        print(YELLOW_PATTERN.format(output))
+    elif c == 'pep':
+        print(PEP_PATTERN.format(output))
+    elif c == 'brown':
+        print(BROWN_PATTERN.format(output))
+    else:
+        print(output)
 
 
 # def count_unique(tensor):
