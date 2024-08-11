@@ -30,14 +30,14 @@ def set_seed(seed, strict=False):
         torch.backends.cudnn.benchmark = False
 
 
-def get_device():
+def get_device(return_str=False):
     if torch.cuda.is_available():
         device = torch.device("cuda")
     elif torch.backends.mps.is_available():
         device = torch.device("mps")  # apple silicon GPU
     else:
         device = torch.device("cpu")
-    return device
+    return device if not return_str else device.type
 
 
 def check_exists(data_folder, dataset_name):
