@@ -89,6 +89,12 @@ def plot_loss(
     plt.show()
 
 
+def reset_model_weights(model):
+    for layer in model.modules():
+        if hasattr(layer, 'reset_parameters'):
+            layer.reset_parameters()
+
+
 def get_layers(func):
     '''
     Usage:
