@@ -278,17 +278,17 @@ def tprint(title='', sep='=', c=None):
         output = f'\n{separator} {title} {separator}'
     
     if c == 'red':
-        print(RED_PATTERN.format(output))
+        print(RED_PATTERN % output)
     elif c == 'green':
-        print(GREEN_PATTERN.format(output))
+        print(GREEN_PATTERN % output)
     elif c == 'blue':
-        print(BLUE_PATTERN.format(output))
+        print(BLUE_PATTERN % output)
     elif c == 'yellow':
-        print(YELLOW_PATTERN.format(output))
+        print(YELLOW_PATTERN % output)
     elif c == 'pep':
-        print(PEP_PATTERN.format(output))
+        print(PEP_PATTERN % output)
     elif c == 'brown':
-        print(BROWN_PATTERN.format(output))
+        print(BROWN_PATTERN % output)
     else:
         print(output)
 

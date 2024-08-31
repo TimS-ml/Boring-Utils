@@ -3,7 +3,7 @@
 
 # Install
 ```bash
-pip install -e git+https://github.com/TimS-ML/Boring-Utils.git
+pip install git+https://github.com/TimS-ML/Boring-Utils.git
 ```
 
 
