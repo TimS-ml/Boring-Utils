@@ -2,25 +2,21 @@
 some of them grabed from x_transformer
 '''
 
-import os
-from pathlib import Path
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 from functools import partial, wraps
-from collections import namedtuple
-from dataclasses import dataclass
+from inspect import isfunction
 from typing import List, Dict, Tuple, Callable, Optional, Union
 
 import torch
+from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-def deriv(func, input_, delta=0.001):
-    return (func(input_ + delta) - func(input_ - delta)) / (2 * delta)
-
-
+'''
+From nano-GPT 
+'''
 def get_batch_np(data, block_size=1024, batch_size=32, device='cpu'):
     # Returns a tensor filled with random integers generated uniformly between low (inclusive) and high (exclusive)
     # The shape of the tensor is defined by the variable argument size
@@ -83,8 +79,11 @@ def get_lr(it, learning_rate, warmup_iters, lr_decay_iters, min_lr):
     return min_lr + coeff * (learning_rate - min_lr)
 
 
-class always():
 
+'''
+From X-transformer
+'''
+class always():
     def __init__(self, val):
         self.val = val
 
@@ -96,9 +95,11 @@ def exists(val):
     return val is not None
 
 
-'''
-From X-transformer, need update
-'''
+def default(val, d):
+    if exists(val):
+        return val
+    return d() if isfunction(d) else d
+
 
 def max_neg_value(tensor):
     return -torch.finfo(tensor.dtype).max
