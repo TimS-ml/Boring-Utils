@@ -1,9 +1,7 @@
 import os
 from pathlib import Path
-import math
 import numpy as np
 import matplotlib.pyplot as plt
-import torch
 import pprint
 import inspect
 
@@ -17,6 +15,7 @@ YELLOW_PATTERN = '\033[93m%s\033[0m'
 
 
 def set_seed(seed, strict=False):
+    import torch
     np.random.seed(seed)
     torch.manual_seed(seed)
     
@@ -31,6 +30,7 @@ def set_seed(seed, strict=False):
 
 
 def get_device(return_str=False):
+    import torch
     if torch.cuda.is_available():
         device = torch.device("cuda")
     elif torch.backends.mps.is_available():
@@ -291,20 +291,3 @@ def tprint(title='', sep='=', c=None):
         print(BROWN_PATTERN % output)
     else:
         print(output)
-
-
-# def count_unique(tensor):
-#     # Calculate unique values and their counts
-#     unique_values, counts = torch.unique(tensor, return_counts=True)
-
-#     # Convert unique_values to a Python list
-#     unique_values = unique_values.tolist()
-
-#     # Convert counts to a Python list
-#     counts = counts.tolist()
-
-#     # Print the unique values and their counts
-#     for value, count in zip(unique_values, counts):
-#         print(f"Value: {value}, Count: {count}")
-# 
-#     print()
