@@ -146,7 +146,7 @@ def sprint(*exprs, globals=None, locals=None):
             print(f"Error evaluating {expr}: {e}")
 
 
-def tprint(title='', sep='=', c=None, class_name=False, include_method=False):
+def tprint(title='', sep='=', c=None, class_name=True, include_method=False):
     """
     Print a title with separators.
     
