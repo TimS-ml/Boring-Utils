@@ -39,24 +39,7 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True):
     
     Parameters:
     - *exprs: Variable-length argument list of expressions to evaluate.
-    - globals, locals (dict, optional): Optional dictionaries to specify the namespace 
-      for the evaluation. This allows the function to access variables outside of its 
-      local scope.
     - class_name (bool, optional): If True, prints the class name or function name along with the variable name.
-    
-    Example:
-    x = 10
-    y = 20
-    cprint(x)
-    # Output: x: 10
-    
-    cprint(x, y)
-    # Output:
-    # x: 10
-    # y: 20
-    
-    cprint()
-    # Output: (Empty line)
     """
     p = pprint.pprint if use_pprint else print
     # Fetch the line of code that called cprint
@@ -94,7 +77,15 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True):
                 # Get the class name or function name from the caller's frame
                 class_or_func_name = frame.f_code.co_name
                 if 'self' in frame.f_locals:
-                    class_or_func_name = frame.f_locals['self'].__class__.__name__
+                    class_name = frame.f_locals['self'].__class__.__name__
+                    method_path = []
+                    current_frame = frame
+                    while current_frame:
+                        if current_frame.f_code.co_name not in ['<module>', class_or_func_name]:
+                            method_path.insert(0, current_frame.f_code.co_name)
+                        current_frame = current_frame.f_back
+                    method_path.insert(0, class_name)
+                    class_or_func_name = '.'.join(method_path)
                 arg = f"{class_or_func_name} -> {arg}"
             
             if not c:           print(YELLOW_PATTERN % f"{arg}:")
@@ -150,7 +141,7 @@ def sprint(*exprs, globals=None, locals=None):
             print(f"Error evaluating {expr}: {e}")
 
 
-def tprint(title='', sep='=', c=None):
+def tprint(title='', sep='=', c=None, class_name=False):
     """
     Print a title with separators.
     
@@ -158,13 +149,33 @@ def tprint(title='', sep='=', c=None):
     - title (str): The title to print.
     - sep (str, optional): The separator character. Default is '='.
     - c (str, optional): The color of the output. Options are 'red', 'green', 'blue', 'yellow', 'pep', 'brown', or None for default color.
+    - class_name (bool, optional): If True, prints the class name or function name along with the title.
     """
-    separator = sep * (20 // len(sep))  # Ensure total length is approximately 20
+    separator = sep * (20 // len(sep))
     
-    if title == '':
-        output = f'\n{separator}{separator}'
+    if class_name:
+        frame = inspect.currentframe().f_back
+        class_or_func_name = frame.f_code.co_name
+        if 'self' in frame.f_locals:
+            class_name = frame.f_locals['self'].__class__.__name__
+            method_path = []
+            current_frame = frame
+            while current_frame:
+                if current_frame.f_code.co_name not in ['<module>', class_or_func_name]:
+                    method_path.insert(0, current_frame.f_code.co_name)
+                current_frame = current_frame.f_back
+            method_path.insert(0, class_name)
+            class_or_func_name = '.'.join(method_path)
+        
+        if title == '':
+            output = f'\n{separator} {class_or_func_name} {separator}'
+        else:
+            output = f'\n{separator} {class_or_func_name} -> {title} {separator}'
     else:
-        output = f'\n{separator} {title} {separator}'
+        if title == '':
+            output = f'\n{separator}{separator}'
+        else:
+            output = f'\n{separator} {title} {separator}'
     
     if c == 'red':
         print(RED_PATTERN % output)
