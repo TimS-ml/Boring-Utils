@@ -10,6 +10,31 @@ BROWN_PATTERN = '\033[33m%s\033[0m'
 YELLOW_PATTERN = '\033[93m%s\033[0m'
 
 
+def _get_caller_path(frame):
+    class_or_func_name = frame.f_code.co_name
+    
+    if 'self' not in frame.f_locals:
+        return class_or_func_name
+        
+    class_name = frame.f_locals['self'].__class__.__name__
+    method_path = []
+    current_frame = frame
+    
+    ignore_methods = {'<module>', '_bootstrap', '_bootstrap_inner', 
+                     'wrapper', 'decorator', '__init__'}
+    
+    while current_frame:
+        func_name = current_frame.f_code.co_name
+        if (func_name not in ignore_methods and 
+            not func_name.startswith('_') and 
+            func_name != class_or_func_name):
+            method_path.insert(0, func_name)
+        current_frame = current_frame.f_back
+    
+    method_path.insert(0, class_name)
+    return '.'.join(method_path)
+
+
 def mprint(obj, magic_methods=False, private_methods=True, public_methods=True):
     # Split items based on their types
     
@@ -74,19 +99,9 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True):
     for arg, expr in zip(arg_list, exprs):
         try:
             if class_name:
-                # Get the class name or function name from the caller's frame
-                class_or_func_name = frame.f_code.co_name
-                if 'self' in frame.f_locals:
-                    class_name = frame.f_locals['self'].__class__.__name__
-                    method_path = []
-                    current_frame = frame
-                    while current_frame:
-                        if current_frame.f_code.co_name not in ['<module>', class_or_func_name]:
-                            method_path.insert(0, current_frame.f_code.co_name)
-                        current_frame = current_frame.f_back
-                    method_path.insert(0, class_name)
-                    class_or_func_name = '.'.join(method_path)
-                arg = f"{class_or_func_name} -> {arg}"
+                frame = inspect.currentframe().f_back
+                caller_path = _get_caller_path(frame)
+                arg = f"{caller_path} -> {arg}"
             
             if not c:           print(YELLOW_PATTERN % f"{arg}:")
             elif c == 'red':    print(RED_PATTERN    % f"{arg}:")
@@ -155,22 +170,12 @@ def tprint(title='', sep='=', c=None, class_name=False):
     
     if class_name:
         frame = inspect.currentframe().f_back
-        class_or_func_name = frame.f_code.co_name
-        if 'self' in frame.f_locals:
-            class_name = frame.f_locals['self'].__class__.__name__
-            method_path = []
-            current_frame = frame
-            while current_frame:
-                if current_frame.f_code.co_name not in ['<module>', class_or_func_name]:
-                    method_path.insert(0, current_frame.f_code.co_name)
-                current_frame = current_frame.f_back
-            method_path.insert(0, class_name)
-            class_or_func_name = '.'.join(method_path)
+        caller_path = _get_caller_path(frame)
         
         if title == '':
-            output = f'\n{separator} {class_or_func_name} {separator}'
+            output = f'\n{separator} {caller_path} {separator}'
         else:
-            output = f'\n{separator} {class_or_func_name} -> {title} {separator}'
+            output = f'\n{separator} {caller_path} -> {title} {separator}'
     else:
         if title == '':
             output = f'\n{separator}{separator}'
