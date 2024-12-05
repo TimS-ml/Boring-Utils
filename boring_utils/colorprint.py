@@ -2,12 +2,29 @@ import pprint
 import inspect
 
 # color patterns
-RED_PATTERN = '\033[31m%s\033[0m'
-GREEN_PATTERN = '\033[32m%s\033[0m'
-BLUE_PATTERN = '\033[34m%s\033[0m'
-PEP_PATTERN = '\033[36m%s\033[0m'
-BROWN_PATTERN = '\033[33m%s\033[0m'
-YELLOW_PATTERN = '\033[93m%s\033[0m'
+RED_PATTERN          = '\033[31m%s\033[0m'
+GREEN_PATTERN        = '\033[32m%s\033[0m'
+BROWN_PATTERN        = '\033[33m%s\033[0m'
+BLUE_PATTERN         = '\033[34m%s\033[0m'
+PURPLE_PATTERN       = '\033[35m%s\033[0m'
+CYAN_PATTERN         = '\033[36m%s\033[0m'
+
+LIGHT_GRAY_PATTERN   = '\033[90m%s\033[0m'
+LIGHT_RED_PATTERN    = '\033[91m%s\033[0m'
+LIGHT_GREEN_PATTERN  = '\033[92m%s\033[0m'
+LIGHT_YELLOW_PATTERN = '\033[93m%s\033[0m'
+LIGHT_BLUE_PATTERN   = '\033[94m%s\033[0m'
+LIGHT_PURPLE_PATTERN = '\033[95m%s\033[0m'
+LIGHT_CYAN_PATTERN   = '\033[96m%s\033[0m'
+LIGHT_WHITE_PATTERN  = '\033[97m%s\033[0m'
+
+BG_RED_PATTERN       = '\033[41m%s\033[0m'
+BG_GREEN_PATTERN     = '\033[42m%s\033[0m'
+BG_BLUE_PATTERN      = '\033[44m%s\033[0m'
+
+BOLD_PATTERN         = '\033[1m%s\033[0m'
+UNDERLINE_PATTERN    = '\033[4m%s\033[0m'
+ITALIC_PATTERN       = '\033[3m%s\033[0m'
 
 
 def _get_caller_path(frame, include_method=True):
@@ -107,14 +124,28 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True, include_method=Fals
                 caller_path = _get_caller_path(frame, include_method)
                 arg = f"{caller_path} -> {arg}"
             
-            if not c:           print(YELLOW_PATTERN % f"{arg}:")
-            elif c == 'red':    print(RED_PATTERN    % f"{arg}:")
-            elif c == 'green':  print(GREEN_PATTERN  % f"{arg}:")
-            elif c == 'blue':   print(BLUE_PATTERN   % f"{arg}:")
-            elif c == 'pep':    print(PEP_PATTERN    % f"{arg}:")
-            elif c == 'brown':  print(BROWN_PATTERN  % f"{arg}:")
-            elif c == 'yellow': print(YELLOW_PATTERN % f"{arg}:")
-            else:               print(arg)
+            if not c:               print(LIGHT_YELLOW_PATTERN % f"{arg}:")
+            elif c == 'red':        print(RED_PATTERN % f"{arg}:")
+            elif c == 'green':      print(GREEN_PATTERN % f"{arg}:")
+            elif c == 'blue':       print(BLUE_PATTERN % f"{arg}:")
+            elif c == 'brown':      print(BROWN_PATTERN % f"{arg}:")
+            elif c == 'purple':     print(PURPLE_PATTERN % f"{arg}:")
+            elif c == 'cyan':       print(CYAN_PATTERN % f"{arg}:")
+            elif c == 'gray':       print(LIGHT_GRAY_PATTERN % f"{arg}:")
+            elif c == 'light_red':  print(LIGHT_RED_PATTERN % f"{arg}:")
+            elif c == 'light_green':print(LIGHT_GREEN_PATTERN % f"{arg}:")
+            elif c == 'yellow':     print(LIGHT_YELLOW_PATTERN % f"{arg}:")
+            elif c == 'light_blue': print(LIGHT_BLUE_PATTERN % f"{arg}:")
+            elif c == 'light_purple':print(LIGHT_PURPLE_PATTERN % f"{arg}:")
+            elif c == 'light_cyan': print(LIGHT_CYAN_PATTERN % f"{arg}:")
+            elif c == 'white':      print(LIGHT_WHITE_PATTERN % f"{arg}:")
+            elif c == 'bg_red':     print(BG_RED_PATTERN % f"{arg}:")
+            elif c == 'bg_green':   print(BG_GREEN_PATTERN % f"{arg}:")
+            elif c == 'bg_blue':    print(BG_BLUE_PATTERN % f"{arg}:")
+            elif c == 'bold':       print(BOLD_PATTERN % f"{arg}:")
+            elif c == 'underline':  print(UNDERLINE_PATTERN % f"{arg}:")
+            elif c == 'italic':     print(ITALIC_PATTERN % f"{arg}:")
+            else:                   print(arg)
             p(expr)
 
         except Exception as e:
@@ -162,27 +193,31 @@ def tprint(title='', sep='=', c=None, class_name=True, include_method=False):
         frame = inspect.currentframe().f_back
         caller_path = _get_caller_path(frame, include_method)
         
-        if title == '':
-            output = f'\n{separator} {caller_path} {separator}'
-        else:
-            output = f'\n{separator} {caller_path} -> {title} {separator}'
+        if title == '': output = f'\n{separator} {caller_path} {separator}'
+        else: output = f'\n{separator} {caller_path} -> {title} {separator}'
     else:
-        if title == '':
-            output = f'\n{separator}{separator}'
-        else:
-            output = f'\n{separator} {title} {separator}'
+        if title == '': output = f'\n{separator}{separator}'
+        else: output = f'\n{separator} {title} {separator}'
     
-    if c == 'red':
-        print(RED_PATTERN % output)
-    elif c == 'green':
-        print(GREEN_PATTERN % output)
-    elif c == 'blue':
-        print(BLUE_PATTERN % output)
-    elif c == 'yellow':
-        print(YELLOW_PATTERN % output)
-    elif c == 'pep':
-        print(PEP_PATTERN % output)
-    elif c == 'brown':
-        print(BROWN_PATTERN % output)
-    else:
-        print(output)
+    if not c:               print(PURPLE_PATTERN % output)
+    elif c == 'red':        print(RED_PATTERN % output)
+    elif c == 'green':      print(GREEN_PATTERN % output)
+    elif c == 'blue':       print(BLUE_PATTERN % output)
+    elif c == 'brown':      print(BROWN_PATTERN % output)
+    elif c == 'purple':     print(PURPLE_PATTERN % output)
+    elif c == 'cyan':       print(CYAN_PATTERN % output)
+    elif c == 'gray':       print(LIGHT_GRAY_PATTERN % output)
+    elif c == 'light_red':  print(LIGHT_RED_PATTERN % output)
+    elif c == 'light_green':print(LIGHT_GREEN_PATTERN % output)
+    elif c == 'yellow':     print(LIGHT_YELLOW_PATTERN % output)
+    elif c == 'light_blue': print(LIGHT_BLUE_PATTERN % output)
+    elif c == 'light_purple':print(LIGHT_PURPLE_PATTERN % output)
+    elif c == 'light_cyan': print(LIGHT_CYAN_PATTERN % output)
+    elif c == 'white':      print(LIGHT_WHITE_PATTERN % output)
+    elif c == 'bg_red':     print(BG_RED_PATTERN % output)
+    elif c == 'bg_green':   print(BG_GREEN_PATTERN % output)
+    elif c == 'bg_blue':    print(BG_BLUE_PATTERN % output)
+    elif c == 'bold':       print(BOLD_PATTERN % output)
+    elif c == 'underline':  print(UNDERLINE_PATTERN % output)
+    elif c == 'italic':     print(ITALIC_PATTERN % output)
+    else:                   print(output)
