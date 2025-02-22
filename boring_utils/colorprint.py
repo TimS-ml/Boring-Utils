@@ -87,70 +87,79 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True, new_line=False, inc
     - *exprs: Variable-length argument list of expressions to evaluate.
     - class_name (bool, optional): If True, prints the class name or function name along with the variable name.
     """
-    p = pprint.pprint if use_pprint else print
-    # Fetch the line of code that called cprint
-    frame = inspect.currentframe().f_back
-    call_line = inspect.getframeinfo(frame).code_context[0].strip()
-    
-    # Extract the arguments from the line
-    arg_str = call_line[call_line.index('(') + 1:-1].strip()
-    
-    # Split the arguments by comma, keeping expressions intact
-    arg_list = []
-    bracket_count = 0
-    current_arg = []
-    for char in arg_str:
-        if char == ',' and bracket_count == 0:
+    try:
+        p = pprint.pprint if use_pprint else print
+        # Fetch the line of code that called cprint
+        frame = inspect.currentframe().f_back
+        call_line = inspect.getframeinfo(frame).code_context[0].strip()
+
+        # Extract the arguments from the line
+        arg_str = call_line[call_line.index('(') + 1:-1].strip()
+
+        # Split the arguments by comma, keeping expressions intact
+        arg_list = []
+        bracket_count = 0
+        current_arg = []
+        for char in arg_str:
+            if char == ',' and bracket_count == 0:
+                arg_list.append(''.join(current_arg).strip())
+                current_arg = []
+            else:
+                if char in '([{':
+                    bracket_count += 1
+                elif char in ')]}':
+                    bracket_count -= 1
+                current_arg.append(char)
+        if current_arg:
             arg_list.append(''.join(current_arg).strip())
-            current_arg = []
-        else:
-            if char in '([{':
-                bracket_count += 1
-            elif char in ')]}':
-                bracket_count -= 1
-            current_arg.append(char)
-    if current_arg:
-        arg_list.append(''.join(current_arg).strip())
-    
-    # Check if there are any arguments
-    if not arg_list or (len(arg_list) == 1 and not arg_list[0]):
-        print()  # Print an empty line
-        return
-    
-    for arg, expr in zip(arg_list, exprs):
-        try:
+
+        # Check if there are any arguments
+        if not arg_list or (len(arg_list) == 1 and not arg_list[0]):
+            print()  # Print an empty line
+            return
+
+        for arg, expr in zip(arg_list, exprs):
+            try:
+                if class_name:
+                    frame = inspect.currentframe().f_back
+                    caller_path = _get_caller_path(frame, include_method)
+                    arg = f"{caller_path} -> {arg}"
+
+                end = '\n' if new_line else ' '
+                if not c:               print(LIGHT_YELLOW_PATTERN % f"{arg}:", end=end)
+                elif c == 'red':        print(RED_PATTERN % f"{arg}:", end=end)
+                elif c == 'green':      print(GREEN_PATTERN % f"{arg}:", end=end)
+                elif c == 'blue':       print(BLUE_PATTERN % f"{arg}:", end=end)
+                elif c == 'brown':      print(BROWN_PATTERN % f"{arg}:", end=end)
+                elif c == 'purple':     print(PURPLE_PATTERN % f"{arg}:", end=end)
+                elif c == 'cyan':       print(CYAN_PATTERN % f"{arg}:", end=end)
+                elif c == 'gray':       print(LIGHT_GRAY_PATTERN % f"{arg}:", end=end)
+                elif c == 'light_red':  print(LIGHT_RED_PATTERN % f"{arg}:", end=end)
+                elif c == 'light_green':print(LIGHT_GREEN_PATTERN % f"{arg}:", end=end)
+                elif c == 'yellow':     print(LIGHT_YELLOW_PATTERN % f"{arg}:", end=end)
+                elif c == 'light_blue': print(LIGHT_BLUE_PATTERN % f"{arg}:", end=end)
+                elif c == 'light_purple':print(LIGHT_PURPLE_PATTERN % f"{arg}:", end=end)
+                elif c == 'light_cyan': print(LIGHT_CYAN_PATTERN % f"{arg}:", end=end)
+                elif c == 'white':      print(LIGHT_WHITE_PATTERN % f"{arg}:", end=end)
+                elif c == 'bg_red':     print(BG_RED_PATTERN % f"{arg}:", end=end)
+                elif c == 'bg_green':   print(BG_GREEN_PATTERN % f"{arg}:", end=end)
+                elif c == 'bg_blue':    print(BG_BLUE_PATTERN % f"{arg}:", end=end)
+                elif c == 'bold':       print(BOLD_PATTERN % f"{arg}:", end=end)
+                elif c == 'underline':  print(UNDERLINE_PATTERN % f"{arg}:", end=end)
+                elif c == 'italic':     print(ITALIC_PATTERN % f"{arg}:", end=end)
+                else:                   print(arg, end=end)
+                p(expr)
+
+            except Exception as e:
+                print(f"Error evaluating {arg}: {e}")
+
+    except (AttributeError, ValueError, IndexError):
+        for expr in exprs:
             if class_name:
                 frame = inspect.currentframe().f_back
                 caller_path = _get_caller_path(frame, include_method)
-                arg = f"{caller_path} -> {arg}"
-            
-            end = '\n' if new_line else ' '
-            if not c:               print(LIGHT_YELLOW_PATTERN % f"{arg}:", end=end)
-            elif c == 'red':        print(RED_PATTERN % f"{arg}:", end=end)
-            elif c == 'green':      print(GREEN_PATTERN % f"{arg}:", end=end)
-            elif c == 'blue':       print(BLUE_PATTERN % f"{arg}:", end=end)
-            elif c == 'brown':      print(BROWN_PATTERN % f"{arg}:", end=end)
-            elif c == 'purple':     print(PURPLE_PATTERN % f"{arg}:", end=end)
-            elif c == 'cyan':       print(CYAN_PATTERN % f"{arg}:", end=end)
-            elif c == 'gray':       print(LIGHT_GRAY_PATTERN % f"{arg}:", end=end)
-            elif c == 'light_red':  print(LIGHT_RED_PATTERN % f"{arg}:", end=end)
-            elif c == 'light_green':print(LIGHT_GREEN_PATTERN % f"{arg}:", end=end)
-            elif c == 'yellow':     print(LIGHT_YELLOW_PATTERN % f"{arg}:", end=end)
-            elif c == 'light_blue': print(LIGHT_BLUE_PATTERN % f"{arg}:", end=end)
-            elif c == 'light_purple':print(LIGHT_PURPLE_PATTERN % f"{arg}:", end=end)
-            elif c == 'light_cyan': print(LIGHT_CYAN_PATTERN % f"{arg}:", end=end)
-            elif c == 'white':      print(LIGHT_WHITE_PATTERN % f"{arg}:", end=end)
-            elif c == 'bg_red':     print(BG_RED_PATTERN % f"{arg}:", end=end)
-            elif c == 'bg_green':   print(BG_GREEN_PATTERN % f"{arg}:", end=end)
-            elif c == 'bg_blue':    print(BG_BLUE_PATTERN % f"{arg}:", end=end)
-            elif c == 'bold':       print(BOLD_PATTERN % f"{arg}:", end=end)
-            elif c == 'underline':  print(UNDERLINE_PATTERN % f"{arg}:", end=end)
-            elif c == 'italic':     print(ITALIC_PATTERN % f"{arg}:", end=end)
-            else:                   print(arg, end=end)
+                print(f"{caller_path} ->", end=' ')
             p(expr)
-
-        except Exception as e:
-            print(f"Error evaluating {arg}: {e}")
 
 
 def sprint(*exprs, globals=None, locals=None):
@@ -188,39 +197,45 @@ def tprint(title='', sep='=', c=None, class_name=True, include_method=False):
     - c (str, optional): The color of the output. Options are 'red', 'green', 'blue', 'yellow', 'pep', 'brown', or None for default color.
     - class_name (bool, optional): If True, prints the class name or function name along with the title.
     """
-    separator = sep * (20 // len(sep))
-    
-    if class_name:
-        frame = inspect.currentframe().f_back
-        caller_path = _get_caller_path(frame, include_method)
-        
-        if title == '': output = f'\n{separator} {caller_path} {separator}'
-        else: output = f'\n{separator} {caller_path} -> {title} {separator}'
-    else:
-        if title == '': output = f'\n{separator}{separator}'
-        else: output = f'\n{separator} {title} {separator}'
-    
-    if not c:
-        if sep == '=': print(PURPLE_PATTERN % output)
-        else:          print(BROWN_PATTERN % output)
-    elif c == 'red':          print(RED_PATTERN % output)
-    elif c == 'green':        print(GREEN_PATTERN % output)
-    elif c == 'blue':         print(BLUE_PATTERN % output)
-    elif c == 'brown':        print(BROWN_PATTERN % output)
-    elif c == 'purple':       print(PURPLE_PATTERN % output)
-    elif c == 'cyan':         print(CYAN_PATTERN % output)
-    elif c == 'gray':         print(LIGHT_GRAY_PATTERN % output)
-    elif c == 'light_red':    print(LIGHT_RED_PATTERN % output)
-    elif c == 'light_green':  print(LIGHT_GREEN_PATTERN % output)
-    elif c == 'yellow':       print(LIGHT_YELLOW_PATTERN % output)
-    elif c == 'light_blue':   print(LIGHT_BLUE_PATTERN % output)
-    elif c == 'light_purple': print(LIGHT_PURPLE_PATTERN % output)
-    elif c == 'light_cyan':   print(LIGHT_CYAN_PATTERN % output)
-    elif c == 'white':        print(LIGHT_WHITE_PATTERN % output)
-    elif c == 'bg_red':       print(BG_RED_PATTERN % output)
-    elif c == 'bg_green':     print(BG_GREEN_PATTERN % output)
-    elif c == 'bg_blue':      print(BG_BLUE_PATTERN % output)
-    elif c == 'bold':         print(BOLD_PATTERN % output)
-    elif c == 'underline':    print(UNDERLINE_PATTERN % output)
-    elif c == 'italic':       print(ITALIC_PATTERN % output)
-    else:                     print(output)
+    try:
+        separator = sep * (20 // len(sep))
+
+        if class_name:
+            frame = inspect.currentframe().f_back
+            caller_path = _get_caller_path(frame, include_method)
+
+            if title == '': output = f'\n{separator} {caller_path} {separator}'
+            else: output = f'\n{separator} {caller_path} -> {title} {separator}'
+        else:
+            if title == '': output = f'\n{separator}{separator}'
+            else: output = f'\n{separator} {title} {separator}'
+
+        if not c:
+            if sep == '=': print(PURPLE_PATTERN % output)
+            else:          print(BROWN_PATTERN % output)
+        elif c == 'red':          print(RED_PATTERN % output)
+        elif c == 'green':        print(GREEN_PATTERN % output)
+        elif c == 'blue':         print(BLUE_PATTERN % output)
+        elif c == 'brown':        print(BROWN_PATTERN % output)
+        elif c == 'purple':       print(PURPLE_PATTERN % output)
+        elif c == 'cyan':         print(CYAN_PATTERN % output)
+        elif c == 'gray':         print(LIGHT_GRAY_PATTERN % output)
+        elif c == 'light_red':    print(LIGHT_RED_PATTERN % output)
+        elif c == 'light_green':  print(LIGHT_GREEN_PATTERN % output)
+        elif c == 'yellow':       print(LIGHT_YELLOW_PATTERN % output)
+        elif c == 'light_blue':   print(LIGHT_BLUE_PATTERN % output)
+        elif c == 'light_purple': print(LIGHT_PURPLE_PATTERN % output)
+        elif c == 'light_cyan':   print(LIGHT_CYAN_PATTERN % output)
+        elif c == 'white':        print(LIGHT_WHITE_PATTERN % output)
+        elif c == 'bg_red':       print(BG_RED_PATTERN % output)
+        elif c == 'bg_green':     print(BG_GREEN_PATTERN % output)
+        elif c == 'bg_blue':      print(BG_BLUE_PATTERN % output)
+        elif c == 'bold':         print(BOLD_PATTERN % output)
+        elif c == 'underline':    print(UNDERLINE_PATTERN % output)
+        elif c == 'italic':       print(ITALIC_PATTERN % output)
+        else:                     print(output)
+
+    except (AttributeError, ValueError, IndexError):
+        separator = sep * (20 // len(sep))
+        output = f'\n{separator} {title} {separator}' if title else f'\n{separator}{separator}'
+        print(PURPLE_PATTERN % output if sep == '=' else BROWN_PATTERN % output) 
