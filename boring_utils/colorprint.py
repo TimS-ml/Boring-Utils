@@ -198,7 +198,7 @@ def tprint(title='', sep='=', c=None, class_name=True, include_method=False):
     - class_name (bool, optional): If True, prints the class name or function name along with the title.
     """
     try:
-        separator = sep * (20 // len(sep))
+        separator = sep * (10 // len(sep))
 
         if class_name:
             frame = inspect.currentframe().f_back
