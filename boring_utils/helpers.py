@@ -56,6 +56,7 @@ class ContextVar:
         return self.value < x
 
 
+DEV = ContextVar("DEV", 0)
 DEBUG = ContextVar("DEBUG", 0)
 TRACING = ContextVar("TRACING", 0)
 VERBOSE = ContextVar("VERBOSE", 0)
