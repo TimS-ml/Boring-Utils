@@ -46,7 +46,12 @@ def resume_checkpoint(checkpoint_path: str, name_pattern: str = r".*[_-](\d+)\.[
 
 
 # New functions for training monitoring
-def log_optimizer_stats(optimizer, logger, step, prefix='optim'):
+def log_optimizer_stats(
+        optimizer: torch.optim.Optimizer, 
+        logger: Any, 
+        step: int, 
+        prefix: str = 'optim'
+    ) -> None:
     """
     Log optimizer statistics to a logger (e.g., wandb)
     
@@ -91,7 +96,12 @@ def log_optimizer_stats(optimizer, logger, step, prefix='optim'):
     logger.log(metrics, step=step)
 
 
-def calculate_throughput(batch_size, seq_len, elapsed_time, grad_accum_steps=1):
+def calculate_throughput(
+        batch_size: int, 
+        seq_len: int, 
+        elapsed_time: float, 
+        grad_accum_steps: int = 1
+    ) -> float:
     """
     Calculate training throughput in tokens per second
     
@@ -109,8 +119,15 @@ def calculate_throughput(batch_size, seq_len, elapsed_time, grad_accum_steps=1):
     return total_tokens / elapsed_time
 
 
-def log_throughput(batch_size, seq_len, start_time, end_time, 
-                  grad_accum_steps, logger, step, num_devices=1):
+def log_throughput(
+        batch_size: int, 
+        seq_len: int, 
+        start_time: float, 
+        end_time: float, 
+        grad_accum_steps: int, 
+        logger: Any, 
+        step: int, 
+        num_devices: int = 1) -> None:
     """
     Calculate and log throughput metrics
     
@@ -144,7 +161,11 @@ def log_throughput(batch_size, seq_len, start_time, end_time,
 '''
 From nano-GPT 
 '''
-def get_batch_np(data, block_size=1024, batch_size=32, device='cpu'):
+def get_batch_np(
+        data: np.ndarray, 
+        block_size: int = 1024, 
+        batch_size: int = 32, 
+        device: str = 'cpu') -> Tuple[torch.Tensor, torch.Tensor]:
     # Returns a tensor filled with random integers generated uniformly between low (inclusive) and high (exclusive)
     # The shape of the tensor is defined by the variable argument size
     # 0 ~ len(data) - block_size with output shape of (batch_size,)
@@ -167,13 +188,14 @@ def get_batch_np(data, block_size=1024, batch_size=32, device='cpu'):
 
 # helps estimate an arbitrarily accurate loss over either split using many batches
 @torch.no_grad()
-def estimate_loss_np(model,
-                     eval_iters,
-                     train_data,
-                     val_data,
-                     block_size=1024,
-                     batch_size=32,
-                     device='cpu'):
+def estimate_loss_np(
+        model: nn.Module,
+        eval_iters: int,
+        train_data: np.ndarray,
+        val_data: np.ndarray,
+        block_size: int = 1024,
+        batch_size: int = 32,
+        device: str = 'cpu') -> Dict[str, float]:
     out = {}
     model.eval()
     data_dic = {'train': train_data, 'val': val_data}
@@ -192,7 +214,12 @@ def estimate_loss_np(model,
 
 
 # learning rate decay scheduler (cosine with warmup)
-def get_lr(it, learning_rate, warmup_iters, lr_decay_iters, min_lr):
+def get_lr(
+        it: int, 
+        learning_rate: float, 
+        warmup_iters: int, 
+        lr_decay_iters: int, 
+        min_lr: float) -> float:
     # 1) linear warmup for warmup_iters steps
     if it < warmup_iters:
         return learning_rate * it / warmup_iters
@@ -210,72 +237,85 @@ def get_lr(it, learning_rate, warmup_iters, lr_decay_iters, min_lr):
 '''
 From X-transformer
 '''
-def cycle(loader):
+T = TypeVar('T')
+
+def cycle(loader: Iterable[T]) -> Generator[T, None, None]:
     while True:
         for data in loader:
             yield data
 
-class always():
-    def __init__(self, val):
+class always:
+    def __init__(self, val: Any) -> None:
         self.val = val
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self.val
 
 
-def exists(val):
+def exists(val: Optional[Any]) -> bool:
     return val is not None
 
 
-def default(val, d):
+def default(val: Optional[T], d: Union[T, Callable[[], T]]) -> T:
     if exists(val):
-        return val
-    return d() if isfunction(d) else d
+        return cast(T, val)
+    return d() if isfunction(d) else cast(T, d)
 
 
-def max_neg_value(tensor):
+def max_neg_value(tensor: torch.Tensor) -> float:
     return -torch.finfo(tensor.dtype).max
 
 
-def pad_at_dim(t, pad: Tuple[int, int], dim = -1, value = 0.):
+def pad_at_dim(
+        t: torch.Tensor, 
+        pad: Tuple[int, int], 
+        dim: int = -1, 
+        value: float = 0.) -> torch.Tensor:
     if pad == (0, 0):
         return t
 
     dims_from_right = (- dim - 1) if dim < 0 else (t.ndim - dim - 1)
     zeros = ((0, 0) * dims_from_right)
-    return F.pad(t, (*zeros, *pad), value = value)
+    return F.pad(t, (*zeros, *pad), value=value)
+
 
 # init helpers
-def init_zero_(layer):
+def init_zero_(layer: nn.Module) -> None:
     nn.init.constant_(layer.weight, 0.)
     if exists(layer.bias):
         nn.init.constant_(layer.bias, 0.)
 
 
 # keyword argument helpers
-def pick_and_pop(keys, d):
+def pick_and_pop(keys: List[str], d: Dict[str, Any]) -> Dict[str, Any]:
     values = list(map(lambda key: d.pop(key), keys))
     return dict(zip(keys, values))
 
 
-def group_dict_by_key(cond, d):
+def group_dict_by_key(
+        cond: Callable[[str], bool], 
+        d: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     return_val = [dict(), dict()]
     for key in d.keys():
         match = bool(cond(key))
         ind = int(not match)
         return_val[ind][key] = d[key]
-    return (*return_val, )
+    return cast(Tuple[Dict[str, Any], Dict[str, Any]], tuple(return_val))
 
 
-def string_begins_with(prefix, str):
-    return str.startswith(prefix)
+def string_begins_with(prefix: str, s: str) -> bool:
+    return s.startswith(prefix)
 
 
-def group_by_key_prefix(prefix, d):
+def group_by_key_prefix(
+        prefix: str, 
+        d: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     return group_dict_by_key(partial(string_begins_with, prefix), d)
 
 
-def groupby_prefix_and_trim(prefix, d):
+def groupby_prefix_and_trim(
+        prefix: str, 
+        d: Dict[str, Any]) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     kwargs_with_prefix, kwargs = group_dict_by_key(
         partial(string_begins_with, prefix), d)
     kwargs_without_prefix = dict(
