@@ -9,7 +9,7 @@ import re
 import time
 from functools import partial, wraps
 from inspect import isfunction
-from typing import List, Dict, Tuple, Callable, Optional, Union
+from typing import List, Dict, Tuple, Callable, Optional, Union, Any, TypeVar
 
 import torch
 from torch import Tensor
