@@ -4,14 +4,141 @@ some of them grabed from x_transformer
 
 import math
 import numpy as np
+import os
+import re
+import time
 from functools import partial, wraps
 from inspect import isfunction
-from typing import List, Dict, Tuple, Callable, Optional, Union
+from typing import List, Dict, Tuple, Callable, Optional, Union, str
 
 import torch
 from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
+
+
+def resume_checkpoint(checkpoint_path: str, name_pattern: str = r".*[_-](\d+)\.[^.]+$") -> Optional[str]:
+    """
+    If checkpoint_path is a directory, it will identify the latest checkpoint file in the directory. Name pattern needed. By default, it assumes the training step is the last number in the filename.
+    """
+    if os.path.isdir(checkpoint_path):
+        checkpoint_files = []
+        for f_name in os.listdir(checkpoint_path):
+            match = re.fullmatch(name_pattern, f_name)
+            if match:
+                step = int(match.group(1))
+                checkpoint_files.append((step, os.path.join(checkpoint_path, f_name)))
+        
+        if checkpoint_files:
+            checkpoint_files.sort(key=lambda x: x[0], reverse=True)  # Sort by step, descending
+            resolved_checkpoint_file = checkpoint_files[0][1]
+            print(f"Identified latest checkpoint in directory '{checkpoint_path}': '{resolved_checkpoint_file}'")
+        else:
+            print(f"Warning: No checkpoint files found in directory '{checkpoint_path}'.")
+            return None
+    elif os.path.isfile(checkpoint_path):
+        resolved_checkpoint_file = checkpoint_path
+    else:
+        print(f"Warning: checkpoint_path path '{checkpoint_path}' is not a valid file or directory.")
+        return None
+
+    return resolved_checkpoint_file
+
+
+# New functions for training monitoring
+def log_optimizer_stats(optimizer, logger, step, prefix='optim'):
+    """
+    Log optimizer statistics to a logger (e.g., wandb)
+    
+    Args:
+        optimizer: PyTorch optimizer
+        logger: Logger object with a log method (e.g., wandb)
+        step: Current training step
+        prefix: Prefix for the logged metrics
+    """
+    metrics = {}
+    
+    # Log statistics for each parameter group
+    for i, param_group in enumerate(optimizer.param_groups):
+        # Current learning rate
+        metrics[f"{prefix}/lr_group_{i}"] = param_group['lr']
+        
+        # Process each parameter
+        for j, p in enumerate(param_group['params']):
+            if not p.requires_grad or p.grad is None:
+                continue
+                
+            state = optimizer.state[p]
+            
+            # For Adam/AdamW optimizers
+            if 'exp_avg' in state:
+                metrics[f"{prefix}/exp_avg_norm_group_{i}"] = state['exp_avg'].norm().item()
+            
+            if 'exp_avg_sq' in state:
+                metrics[f"{prefix}/exp_avg_sq_norm_group_{i}"] = state['exp_avg_sq'].norm().item()
+            
+            # Gradient norm
+            metrics[f"{prefix}/grad_norm_group_{i}"] = p.grad.norm().item()
+            
+            # Parameter norm
+            metrics[f"{prefix}/param_norm_group_{i}"] = p.data.norm().item()
+            
+            # Only log a few parameters to avoid excessive logging
+            if j >= 3:
+                break
+    
+    # Log all metrics
+    logger.log(metrics, step=step)
+
+
+def calculate_throughput(batch_size, seq_len, elapsed_time, grad_accum_steps=1):
+    """
+    Calculate training throughput in tokens per second
+    
+    Args:
+        batch_size: Batch size
+        seq_len: Sequence length
+        elapsed_time: Elapsed time in seconds
+        grad_accum_steps: Gradient accumulation steps
+    
+    Returns:
+        float: Tokens per second
+    """
+    # Total tokens processed = batch_size * seq_len * grad_accum_steps
+    total_tokens = batch_size * seq_len * grad_accum_steps
+    return total_tokens / elapsed_time
+
+
+def log_throughput(batch_size, seq_len, start_time, end_time, 
+                  grad_accum_steps, logger, step, num_devices=1):
+    """
+    Calculate and log throughput metrics
+    
+    Args:
+        batch_size: Batch size per device
+        seq_len: Sequence length
+        start_time: Start time of the operation
+        end_time: End time of the operation
+        grad_accum_steps: Gradient accumulation steps
+        logger: Logger object with a log method (e.g., wandb)
+        step: Current training step
+        num_devices: Number of devices used for training
+    """
+    elapsed_time = end_time - start_time
+    
+    # Calculate overall throughput
+    total_batch_size = batch_size * num_devices
+    throughput = calculate_throughput(total_batch_size, seq_len, elapsed_time, grad_accum_steps)
+    
+    # Calculate per-device throughput
+    device_throughput = throughput / num_devices
+    
+    # Log metrics
+    logger.log({
+        "throughput/tokens_per_sec": throughput,
+        "throughput/tokens_per_sec_per_device": device_throughput,
+        "throughput/batch_time_sec": elapsed_time
+    }, step=step)
 
 
 '''
@@ -83,6 +210,11 @@ def get_lr(it, learning_rate, warmup_iters, lr_decay_iters, min_lr):
 '''
 From X-transformer
 '''
+def cycle(loader):
+    while True:
+        for data in loader:
+            yield data
+
 class always():
     def __init__(self, val):
         self.val = val
