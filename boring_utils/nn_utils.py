@@ -20,10 +20,16 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def resume_checkpoint(checkpoint_path: str, name_pattern: str = r".*[_-](\d+)\.[^.]+$") -> Optional[str]:
+'''
+For Training
+'''
+def resume_checkpoint(checkpoint_path: Optional[str], name_pattern: str = r".*[_-](\d+)\.[^.]+$") -> Optional[str]:
     """
     If checkpoint_path is a directory, it will identify the latest checkpoint file in the directory. Name pattern needed. By default, it assumes the training step is the last number in the filename.
     """
+    if checkpoint_path is None:
+        return None
+        
     if os.path.isdir(checkpoint_path):
         checkpoint_files = []
         for f_name in os.listdir(checkpoint_path):
@@ -48,25 +54,20 @@ def resume_checkpoint(checkpoint_path: str, name_pattern: str = r".*[_-](\d+)\.[
     return resolved_checkpoint_file
 
 
-# New functions for training monitoring
-def log_optimizer_stats(
-        optimizer: torch.optim.Optimizer, 
-        logger: Any, 
-        step: int, 
-        prefix: str = 'optim'
-    ) -> None:
+def calculate_optimizer_stats(optimizer: torch.optim.Optimizer, prefix: str = 'optim') -> Dict[str, float]:
     """
-    Log optimizer statistics to a logger (e.g., wandb)
+    Calculate optimizer statistics and return them as a dictionary
     
     Args:
         optimizer: PyTorch optimizer
-        logger: Logger object with a log method (e.g., wandb)
-        step: Current training step
-        prefix: Prefix for the logged metrics
+        prefix: Prefix for the metrics keys
+    
+    Returns:
+        Dict[str, float]: Dictionary of optimizer statistics
     """
     metrics = {}
     
-    # Log statistics for each parameter group
+    # Calculate statistics for each parameter group
     for i, param_group in enumerate(optimizer.param_groups):
         # Current learning rate
         metrics[f"{prefix}/lr_group_{i}"] = param_group['lr']
@@ -91,48 +92,22 @@ def log_optimizer_stats(
             # Parameter norm
             metrics[f"{prefix}/param_norm_group_{i}"] = p.data.norm().item()
             
-            # Only log a few parameters to avoid excessive logging
+            # Only process a few parameters to avoid excessive data
             if j >= 3:
                 break
     
-    # Log all metrics
-    logger.log(metrics, step=step)
+    return metrics
 
 
 def calculate_throughput(
         batch_size: int, 
         seq_len: int, 
-        elapsed_time: float, 
-        grad_accum_steps: int = 1
-    ) -> float:
-    """
-    Calculate training throughput in tokens per second
-    
-    Args:
-        batch_size: Batch size
-        seq_len: Sequence length
-        elapsed_time: Elapsed time in seconds
-        grad_accum_steps: Gradient accumulation steps
-    
-    Returns:
-        float: Tokens per second
-    """
-    # Total tokens processed = batch_size * seq_len * grad_accum_steps
-    total_tokens = batch_size * seq_len * grad_accum_steps
-    return total_tokens / elapsed_time
-
-
-def log_throughput(
-        batch_size: int, 
-        seq_len: int, 
         start_time: float, 
         end_time: float, 
-        grad_accum_steps: int, 
-        logger: Any, 
-        step: int, 
-        num_devices: int = 1) -> None:
+        grad_accum_steps: int = 1,
+        num_devices: int = 1) -> Dict[str, float]:
     """
-    Calculate and log throughput metrics
+    Calculate training throughput metrics
     
     Args:
         batch_size: Batch size per device
@@ -140,25 +115,25 @@ def log_throughput(
         start_time: Start time of the operation
         end_time: End time of the operation
         grad_accum_steps: Gradient accumulation steps
-        logger: Logger object with a log method (e.g., wandb)
-        step: Current training step
         num_devices: Number of devices used for training
+    
+    Returns:
+        Dict[str, float]: Dictionary of throughput metrics
     """
     elapsed_time = end_time - start_time
     
     # Calculate overall throughput
     total_batch_size = batch_size * num_devices
-    throughput = calculate_throughput(total_batch_size, seq_len, elapsed_time, grad_accum_steps)
+    tokens_per_sec = total_batch_size * seq_len * grad_accum_steps / elapsed_time
     
     # Calculate per-device throughput
-    device_throughput = throughput / num_devices
+    device_throughput = tokens_per_sec / num_devices
     
-    # Log metrics
-    logger.log({
-        "throughput/tokens_per_sec": throughput,
+    return {
+        "throughput/tokens_per_sec": tokens_per_sec,
         "throughput/tokens_per_sec_per_device": device_throughput,
         "throughput/batch_time_sec": elapsed_time
-    }, step=step)
+    }
 
 
 '''
