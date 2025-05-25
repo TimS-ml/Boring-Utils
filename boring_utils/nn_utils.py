@@ -23,7 +23,7 @@ import torch.nn.functional as F
 '''
 For Training
 '''
-def resume_checkpoint(checkpoint_path: Optional[str], name_pattern: str = r".*[_-](\d+)\.[^.]+$") -> Optional[str]:
+def resume_checkpoint(checkpoint_path: Optional[str], name_pattern: str = r".*[_-](\d+)\.(pt|pth|ckpt|bin|model|safetensors)$") -> Optional[str]:
     """
     If checkpoint_path is a directory, it will identify the latest checkpoint file in the directory. Name pattern needed. By default, it assumes the training step is the last number in the filename.
     """
