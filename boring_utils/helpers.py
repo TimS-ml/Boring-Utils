@@ -4,10 +4,20 @@
 
 from __future__ import annotations
 import os, contextlib
-from typing import Dict, Tuple, Union, List, ClassVar
+from typing import Dict, Tuple, Union, List, ClassVar, Any
 
 
-def getenv(key:str, default=0): return type(default)(os.getenv(key, default))
+def getenv(key:str, default: Any = 0) -> Any:
+    val = os.getenv(key)
+    if val is None:
+        return default
+    # Attempt to cast to the type of the default value if default is not None
+    if default is not None:
+        try:
+            return type(default)(val)
+        except (ValueError, TypeError):
+            return val
+    return val
 
 
 class Context(contextlib.ContextDecorator):
