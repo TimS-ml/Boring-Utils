@@ -1,5 +1,6 @@
 import pprint
 import inspect
+from datetime import datetime
 
 # color patterns
 RED_PATTERN          = '\033[31m%s\033[0m'
@@ -78,7 +79,7 @@ def mprint(obj, magic_methods=False, private_methods=True, public_methods=True):
             print(f"    {item}")
 
 
-def cprint(*exprs, c=None, class_name=True, use_pprint=True, new_line=False, include_method=False):
+def cprint(*exprs, c=None, class_name=True, use_pprint=True, new_line=False, include_method=False, timestamp=False):
     """
     Custom print function that prints the name of the variable/expression
     alongside its value.
@@ -86,6 +87,7 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True, new_line=False, inc
     Parameters:
     - *exprs: Variable-length argument list of expressions to evaluate.
     - class_name (bool, optional): If True, prints the class name or function name along with the variable name.
+    - timestamp (bool, optional): If True, adds timestamp info at the beginning of the output.
     """
     try:
         p = pprint.pprint if use_pprint else print
@@ -124,6 +126,11 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True, new_line=False, inc
                     frame = inspect.currentframe().f_back
                     caller_path = _get_caller_path(frame, include_method)
                     arg = f"{caller_path} -> {arg}"
+                
+                # Add timestamp if requested
+                if timestamp:
+                    timestamp_str = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] "
+                    arg = timestamp_str + arg
 
                 end = '\n' if new_line else ' '
                 if not c:               print(LIGHT_YELLOW_PATTERN % f"{arg}:", end=end)
@@ -158,7 +165,12 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True, new_line=False, inc
             if class_name:
                 frame = inspect.currentframe().f_back
                 caller_path = _get_caller_path(frame, include_method)
-                print(f"{caller_path} ->", end=' ')
+                prefix = f"{caller_path} ->"
+                if timestamp:
+                    prefix = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] {prefix}"
+                print(prefix, end=' ')
+            elif timestamp:
+                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}]", end=' ')
             p(expr)
 
 
@@ -187,7 +199,7 @@ def sprint(*exprs, globals=None, locals=None):
             print(f"Error evaluating {expr}: {e}")
 
 
-def tprint(title='', sep='=', c=None, class_name=True, include_method=False):
+def tprint(title='', sep='=', c=None, class_name=True, include_method=False, new_line=False, timestamp=True):
     """
     Print a title with separators.
     
@@ -196,19 +208,32 @@ def tprint(title='', sep='=', c=None, class_name=True, include_method=False):
     - sep (str, optional): The separator character. Default is '='.
     - c (str, optional): The color of the output. Options are 'red', 'green', 'blue', 'yellow', 'pep', 'brown', or None for default color.
     - class_name (bool, optional): If True, prints the class name or function name along with the title.
+    - new_line (bool, optional): If True, starts the output with a newline. Default is True.
+    - timestamp (bool, optional): If True, adds timestamp info at the beginning of the output.
     """
     try:
-        separator = sep * (10 // len(sep))
+        separator = sep * (5 // len(sep))
+        
+        # Add timestamp prefix if requested
+        timestamp_prefix = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] " if timestamp else ""
 
         if class_name:
             frame = inspect.currentframe().f_back
             caller_path = _get_caller_path(frame, include_method)
 
-            if title == '': output = f'\n{separator} {caller_path} {separator}'
-            else: output = f'\n{separator} {caller_path} -> {title} {separator}'
+            if title == '': 
+                content = f'{separator} {caller_path} {separator}'
+            else: 
+                content = f'{separator} {caller_path} -> {title} {separator}'
         else:
-            if title == '': output = f'\n{separator}{separator}'
-            else: output = f'\n{separator} {title} {separator}'
+            if title == '': 
+                content = f'{separator}{separator}'
+            else: 
+                content = f'{separator} {title} {separator}'
+        
+        # Combine timestamp and content, add newline if requested
+        newline_prefix = '\n' if new_line else ''
+        output = f'{newline_prefix}{timestamp_prefix}{content}'
 
         if not c:
             if sep == '=': print(PURPLE_PATTERN % output)
@@ -237,5 +262,13 @@ def tprint(title='', sep='=', c=None, class_name=True, include_method=False):
 
     except (AttributeError, ValueError, IndexError):
         separator = sep * (20 // len(sep))
-        output = f'\n{separator} {title} {separator}' if title else f'\n{separator}{separator}'
+        timestamp_prefix = f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] " if timestamp else ""
+        newline_prefix = '\n' if new_line else ''
+        
+        if title:
+            content = f'{separator} {title} {separator}'
+        else:
+            content = f'{separator}{separator}'
+            
+        output = f'{newline_prefix}{timestamp_prefix}{content}'
         print(PURPLE_PATTERN % output if sep == '=' else BROWN_PATTERN % output) 
