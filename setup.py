@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='boring-utils',
-    version='0.0.6',
+    version='0.0.7',
     description='Boring utils for from scratch implementation',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
