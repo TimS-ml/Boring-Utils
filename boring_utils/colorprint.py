@@ -93,10 +93,35 @@ def cprint(*exprs, c=None, class_name=True, use_pprint=True, new_line=False, inc
         p = pprint.pprint if use_pprint else print
         # Fetch the line of code that called cprint
         frame = inspect.currentframe().f_back
-        call_line = inspect.getframeinfo(frame).code_context[0].strip()
+
+        # Get multiple lines of context to handle multiline calls
+        frameinfo = inspect.getframeinfo(frame)
+        lineno = frameinfo.lineno
+        filename = frameinfo.filename
+
+        # Try to get the complete function call across multiple lines
+        try:
+            with open(filename, 'r') as f:
+                lines = f.readlines()
+                start_line = lineno - 1
+
+                # Find the opening parenthesis
+                call_line = ''
+                paren_count = 0
+                for i in range(start_line, min(start_line + 20, len(lines))):
+                    line = lines[i]
+                    call_line += line
+                    paren_count += line.count('(') - line.count(')')
+                    if paren_count == 0 and '(' in call_line:
+                        break
+
+                call_line = call_line.strip()
+        except:
+            # Fallback to original method
+            call_line = frameinfo.code_context[0].strip()
 
         # Extract the arguments from the line
-        arg_str = call_line[call_line.index('(') + 1:-1].strip()
+        arg_str = call_line[call_line.index('(') + 1:call_line.rindex(')')].strip()
 
         # Split the arguments by comma, keeping expressions intact
         arg_list = []
